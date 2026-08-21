@@ -16,7 +16,7 @@ import {
   Zap
 } from 'lucide-react';
 import { useWebSocket } from '@/hooks/useWebSocket';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from '@/lib/utils';
 
 interface AgentPerformanceMetrics {
   tasks_completed: number;
@@ -63,15 +63,45 @@ export const AgentStatusDashboard: React.FC = () => {
   // WebSocket connection for real-time updates
   const { data: wsData, isConnected } = useWebSocket('/api/agent-status/ws');
 
+  const normalizeAgentData = (raw: Record<string, any>): AgentStatusData => {
+    const result: AgentStatusData = {};
+    if (!raw || typeof raw !== 'object') return result;
+    
+    for (const [key, val] of Object.entries(raw)) {
+      if (!val || typeof val !== 'object') continue;
+      result[key] = {
+        agent_name: val.agent_name || val.name || key,
+        status: (val.status === 'active' || val.status === 'idle' || val.status === 'busy' || val.status === 'error') ? val.status : 'active',
+        current_task: val.current_task || undefined,
+        last_activity: val.last_activity || new Date().toISOString(),
+        performance_metrics: {
+          tasks_completed: val.performance_metrics?.tasks_completed ?? val.tasks_completed ?? 0,
+          success_rate: val.performance_metrics?.success_rate ?? val.success_rate ?? 1.0,
+          avg_completion_time: val.performance_metrics?.avg_completion_time ?? val.avg_completion_time ?? 1.2,
+          current_workload: val.performance_metrics?.current_workload ?? val.current_workload ?? 0,
+          reliability_score: val.performance_metrics?.reliability_score ?? val.reliability_score ?? 0.95,
+        },
+        queue_status: val.queue_status || {}
+      };
+    }
+    return result;
+  };
+
   // Fetch initial agent status data
   const fetchAgentStatus = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/agent/status');
+      let response = await fetch('/api/agent-status/all');
+      if (!response.ok) {
+        response = await fetch('/api/agents/status');
+      }
+      if (!response.ok) {
+        response = await fetch('/api/agent/status');
+      }
       if (!response.ok) throw new Error('Failed to fetch agent status');
       
       const data = await response.json();
-      setAgentData(data);
+      setAgentData(normalizeAgentData(data));
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
@@ -83,7 +113,7 @@ export const AgentStatusDashboard: React.FC = () => {
   // Handle WebSocket updates
   useEffect(() => {
     if (wsData && wsData.type === 'agent_status') {
-      setAgentData(wsData.data);
+      setAgentData(normalizeAgentData(wsData.data));
     }
   }, [wsData]);
 

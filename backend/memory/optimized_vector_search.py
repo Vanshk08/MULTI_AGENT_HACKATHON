@@ -22,8 +22,12 @@ class OptimizedVectorSearch:
         self.batch_event = asyncio.Event()
         self.processing_batch = False
         
-        # Start background batch processor
-        asyncio.create_task(self._batch_processor())
+        # Start background batch processor if event loop is running
+        try:
+            loop = asyncio.get_running_loop()
+            loop.create_task(self._batch_processor())
+        except RuntimeError:
+            pass
     
     async def search(self, query: str, agent_name: Optional[str] = None, 
                    memory_type: Optional[str] = None, limit: int = 5,

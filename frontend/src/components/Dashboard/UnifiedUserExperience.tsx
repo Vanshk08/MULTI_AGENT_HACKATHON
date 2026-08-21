@@ -14,7 +14,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { useWebSocket } from '@/hooks/useWebSocket';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from '@/lib/utils';
 
 // Reusing interfaces from existing components
 interface Notification {
