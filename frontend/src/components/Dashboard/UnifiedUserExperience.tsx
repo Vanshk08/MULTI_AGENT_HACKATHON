@@ -13,7 +13,7 @@ import {
   X,
   ArrowRight
 } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from '@/lib/utils';
 
 // Reusing interfaces from existing components
 interface Notification {
@@ -108,7 +108,7 @@ export const UnifiedUserExperience: React.FC = () => {
     setIsSearching(true);
     // Simulate search API call
     setTimeout(() => {
-      const results = [
+      const results: SearchResult[] = [
         {
           id: '1',
           type: 'conversation',

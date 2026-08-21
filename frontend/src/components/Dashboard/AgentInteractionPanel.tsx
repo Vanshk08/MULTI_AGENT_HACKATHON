@@ -24,7 +24,7 @@ import {
   Pause
 } from 'lucide-react';
 
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from '@/lib/utils';
 
 interface CollaborativeDecision {
   decision_id: string;
