@@ -21,7 +21,7 @@ import {
   AlertCircle,
   ArrowRight
 } from 'lucide-react';
-import { formatDistanceToNow, format } from 'date-fns';
+import { formatDistanceToNow, format } from '@/lib/utils';
 
 interface AgentActivity {
   agent_name: string;

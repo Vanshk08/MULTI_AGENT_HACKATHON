@@ -130,6 +130,19 @@ app.include_router(integrations_router)
 from api.prd_compliance_api import router as prd_router
 app.include_router(prd_router)
 
+# Include Dashboard & Collaboration routers
+from api.agent_status_api import router as agent_status_router
+from api.morning_brief_api import router as morning_brief_router
+from api.task_flow_api import router as task_flow_router
+from api.agent_interaction_api import router as agent_interaction_router
+from api.shared_context_api import router as shared_context_router
+
+app.include_router(agent_status_router)
+app.include_router(morning_brief_router)
+app.include_router(task_flow_router)
+app.include_router(agent_interaction_router)
+app.include_router(shared_context_router)
+
 # Request models
 class AuthRequest(BaseModel):
     email: str
@@ -283,6 +296,7 @@ async def start_project(request: ProjectRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/agents/status")
+@app.get("/api/agent/status")
 async def get_agents_status():
     """Get status of all agents including new specialized agents"""
     try:

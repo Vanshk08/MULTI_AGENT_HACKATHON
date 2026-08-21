@@ -39,9 +39,13 @@ class OptimizedMemoryManager:
         # Frequently accessed data cache (permanent until invalidated)
         self._hot_cache = {}
         
-        # Start background cache cleanup tasks
-        asyncio.create_task(self._periodic_cache_cleanup())
-        asyncio.create_task(self._periodic_redis_cleanup())
+        # Start background cache cleanup tasks if event loop is running
+        try:
+            loop = asyncio.get_running_loop()
+            loop.create_task(self._periodic_cache_cleanup())
+            loop.create_task(self._periodic_redis_cleanup())
+        except RuntimeError:
+            pass
     
     @property
     def graph_memory(self):

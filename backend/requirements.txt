@@ -9,7 +9,8 @@ langgraph>=0.2.40,<0.3
 langchain>=0.3.0,<0.4
 langchain-community>=0.3.0,<0.4
 langchain-core>=0.3.0,<0.4
-crewai>=0.76,<0.86
+# crewai is optional and requires Python >= 3.10; the app uses LangGraph directly.
+# crewai>=0.76,<0.86
 
 # Memory & Storage
 neo4j>=5.15,<6
