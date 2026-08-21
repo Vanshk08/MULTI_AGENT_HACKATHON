@@ -112,40 +112,18 @@ export const MorningBrief: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedDecision, setSelectedDecision] = useState<string | null>(null);
 
-  // Fetch morning brief data
+  // The Morning Brief feature has no equivalent backend endpoint. We disable
+  // it gracefully instead of calling a nonexistent route.
   const fetchMorningBrief = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/morning-brief/today');
-      if (!response.ok) throw new Error('Failed to fetch morning brief');
-      
-      const data = await response.json();
-      setBriefData(data);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
-    } finally {
-      setLoading(false);
-    }
+    setLoading(true);
+    setBriefData(null);
+    setError('Morning Brief is not available: no equivalent backend endpoint exists.');
+    setLoading(false);
   };
 
   // Resolve decision
-  const resolveDecision = async (decisionId: string, resolution: Record<string, any>) => {
-    try {
-      const response = await fetch(`/api/morning-brief/decision-queue/${decisionId}/resolve`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(resolution)
-      });
-      
-      if (!response.ok) throw new Error('Failed to resolve decision');
-      
-      // Refresh data
-      await fetchMorningBrief();
-      setSelectedDecision(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to resolve decision');
-    }
+  const resolveDecision = async (_decisionId: string, _resolution: Record<string, any>) => {
+    setError('Decision queue resolution is not available: no equivalent backend endpoint exists.');
   };
 
   // Initial load

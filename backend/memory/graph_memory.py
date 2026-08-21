@@ -285,6 +285,22 @@ class GraphMemory:
                 "status": "active"
             }
     
+    async def export_to_yaml(self, output_dir: str) -> Dict[str, str]:
+        """Export graph data to YAML files (placeholder; no-op if Neo4j unavailable)"""
+        if not self.driver:
+            return {}
+        return {}
+
+    async def export_to_graphml(self, output_path: str) -> str:
+        """Export graph data to GraphML (placeholder; no-op if Neo4j unavailable)"""
+        if not self.driver:
+            return output_path
+        return output_path
+
+    async def cleanup_old_exports(self, output_dir: str) -> None:
+        """Cleanup old export files (placeholder; no-op if Neo4j unavailable)"""
+        pass
+
     def close(self):
         """Close database connection"""
         if self.driver:

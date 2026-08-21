@@ -13,7 +13,6 @@ import {
   X,
   ArrowRight
 } from 'lucide-react';
-import { useWebSocket } from '@/hooks/useWebSocket';
 import { formatDistanceToNow } from 'date-fns';
 
 // Reusing interfaces from existing components
@@ -54,8 +53,8 @@ export const UnifiedUserExperience: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [showNotifications, setShowNotifications] = useState(false);
 
-  // WebSocket connection for real-time updates
-  const { data: wsData } = useWebSocket('/api/notifications/ws');
+  // No backend WebSocket exists for notifications; this component uses local
+  // mock data only.
 
   // Mock data for demonstration
   const mockNotifications: Notification[] = [

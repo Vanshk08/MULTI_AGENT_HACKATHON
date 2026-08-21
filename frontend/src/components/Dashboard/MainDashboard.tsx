@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { 
   Activity, 
   BarChart3, 
@@ -37,6 +38,9 @@ interface DashboardStats {
 
 export const MainDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
+  const [vision, setVision] = useState('');
+  const [starting, setStarting] = useState(false);
+  const [startResult, setStartResult] = useState<string | null>(null);
   
   // Real stats from API
   const [stats, setStats] = useState<DashboardStats>({
@@ -85,6 +89,36 @@ export const MainDashboard: React.FC = () => {
     if (health >= 80) return 'bg-green-100 text-green-800';
     if (health >= 60) return 'bg-yellow-100 text-yellow-800';
     return 'bg-red-100 text-red-800';
+  };
+
+  const startProject = async () => {
+    if (!vision.trim()) return;
+    setStarting(true);
+    setStartResult(null);
+    try {
+      const response = await fetch('/api/start-project', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          vision: vision.trim(),
+          user_name: 'Dashboard User',
+          approval_mode: 'auto'
+        })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setStartResult(`Project started: ${data.project_id || 'OK'} (${data.agents_executed || 0} agents)`);
+      } else {
+        setStartResult(`Error: ${data.detail || response.statusText}`);
+      }
+    } catch (error) {
+      setStartResult(`Error: ${error instanceof Error ? error.message : 'Unknown'}`);
+    } finally {
+      setStarting(false);
+    }
   };
 
   return (
@@ -226,7 +260,7 @@ export const MainDashboard: React.FC = () => {
               <CardHeader>
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <Button 
                     variant="outline" 
@@ -254,6 +288,27 @@ export const MainDashboard: React.FC = () => {
                     <MessageSquare className="w-6 h-6" />
                     <span>Manage Interactions</span>
                   </Button>
+                </div>
+
+                <div className="border-t pt-4">
+                  <h3 className="text-sm font-medium mb-2">Start a New Project</h3>
+                  <div className="flex space-x-2">
+                    <Input
+                      placeholder="Describe your business idea or vision..."
+                      value={vision}
+                      onChange={(e) => setVision(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && startProject()}
+                      className="flex-1"
+                    />
+                    <Button onClick={startProject} disabled={starting || !vision.trim()}>
+                      {starting ? 'Starting...' : 'Start Project'}
+                    </Button>
+                  </div>
+                  {startResult && (
+                    <p className={`text-sm mt-2 ${startResult.startsWith('Error') ? 'text-red-600' : 'text-green-600'}`}>
+                      {startResult}
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>

@@ -23,7 +23,6 @@ import {
   Play,
   Pause
 } from 'lucide-react';
-import { useWebSocket } from '@/hooks/useWebSocket';
 import { formatDistanceToNow } from 'date-fns';
 
 interface CollaborativeDecision {
@@ -107,8 +106,7 @@ export const AgentInteractionPanel: React.FC = () => {
     'Marketing', 'Finance', 'Legal', 'Strategy', 'Cofounder', 'Manager'
   ]);
 
-  // WebSocket connections for real-time updates
-  const { data: wsData } = useWebSocket('/api/agent-interaction/ws');
+  // No backend WebSocket exists for agent interactions.
 
   // Form data
   const [decisionForm, setDecisionForm] = useState({
@@ -177,22 +175,29 @@ export const AgentInteractionPanel: React.FC = () => {
   // Create functions
   const createDecision = async () => {
     try {
-      const response = await fetch('/api/agent-interaction/collaborative-decision', {
+      // Map the collaborative decision form to the real /api/collaboration/request
+      // endpoint, which is the closest backend capability for agent collaboration.
+      const agents = decisionForm.agents_involved.length > 0
+        ? decisionForm.agents_involved
+        : ['Orchestrator'];
+      const response = await fetch('/api/collaboration/request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          topic: decisionForm.topic,
-          description: decisionForm.description,
-          agents_involved: decisionForm.agents_involved,
-          priority: decisionForm.priority,
-          timeout: decisionForm.timeout,
-          context: {},
-          decision_criteria: {}
+          requesting_agent: agents[0],
+          target_agent: agents[1] || agents[0],
+          request_type: decisionForm.topic || 'collaborative_decision',
+          context: {
+            description: decisionForm.description,
+            priority: decisionForm.priority,
+            timeout: decisionForm.timeout,
+            agents_involved: agents
+          }
         })
       });
 
-      if (!response.ok) throw new Error('Failed to create decision');
-      
+      if (!response.ok) throw new Error('Failed to create collaboration request');
+
       setNewDecisionOpen(false);
       setDecisionForm({
         topic: '',
@@ -208,71 +213,21 @@ export const AgentInteractionPanel: React.FC = () => {
   };
 
   const createMeeting = async () => {
-    try {
-      const response = await fetch('/api/agent-interaction/meeting', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          topic: meetingForm.topic,
-          agents_involved: meetingForm.agents_involved,
-          agenda: meetingForm.agenda,
-          duration_minutes: meetingForm.duration_minutes,
-          priority: meetingForm.priority
-        })
-      });
-
-      if (!response.ok) throw new Error('Failed to create meeting');
-      
-      setNewMeetingOpen(false);
-      setMeetingForm({
-        topic: '',
-        agents_involved: [],
-        agenda: [{ item: '', description: '' }],
-        duration_minutes: 30,
-        priority: 'medium'
-      });
-      await fetchMeetings();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create meeting');
-    }
+    // Agent meetings have no equivalent backend endpoint. Disable gracefully.
+    setError('Agent meetings are not supported by the current backend.');
+    setNewMeetingOpen(false);
   };
 
   const createOverride = async () => {
-    try {
-      const response = await fetch('/api/agent-interaction/human-override', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(overrideForm)
-      });
-
-      if (!response.ok) throw new Error('Failed to create override');
-      
-      setNewOverrideOpen(false);
-      setOverrideForm({
-        target_agent: '',
-        override_type: 'task_assignment',
-        instructions: {},
-        reason: '',
-        duration_minutes: undefined
-      });
-      await fetchOverrides();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create override');
-    }
+    // Human overrides have no equivalent backend endpoint. Disable gracefully.
+    setError('Human overrides are not supported by the current backend.');
+    setNewOverrideOpen(false);
   };
 
   // Cancel override
-  const cancelOverride = async (overrideId: string) => {
-    try {
-      const response = await fetch(`/api/agent-interaction/human-override/${overrideId}/cancel`, {
-        method: 'POST'
-      });
-
-      if (!response.ok) throw new Error('Failed to cancel override');
-      await fetchOverrides();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to cancel override');
-    }
+  const cancelOverride = async (_overrideId: string) => {
+    // No backend endpoint exists for cancelling human overrides.
+    setError('Human overrides are not supported by the current backend.');
   };
 
   // Initial load
@@ -280,13 +235,7 @@ export const AgentInteractionPanel: React.FC = () => {
     fetchAllData();
   }, []);
 
-  // Handle WebSocket updates
-  useEffect(() => {
-    if (wsData) {
-      // Handle real-time updates
-      fetchAllData();
-    }
-  }, [wsData]);
+
 
   if (loading) {
     return (

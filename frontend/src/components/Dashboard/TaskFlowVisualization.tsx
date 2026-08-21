@@ -15,7 +15,6 @@ import {
   Users,
   Zap
 } from 'lucide-react';
-import { useWebSocket } from '@/hooks/useWebSocket';
 import ReactFlow, { 
   Node, 
   Edge, 
@@ -97,17 +96,43 @@ export const TaskFlowVisualization: React.FC = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
-  // WebSocket connection for real-time updates
-  const { data: wsData, isConnected } = useWebSocket('/api/task-flow/ws');
+  // No backend WebSocket exists for task flow data; we are polling only.
+  const isConnected = false;
 
-  // Fetch task flow data
+  // Fetch task flow data from the real memory graph endpoint.
+
+  // Fetch task flow data from the real memory graph endpoint
   const fetchTaskFlow = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/task-flow/current');
+      const response = await fetch('/api/memory/graph');
       if (!response.ok) throw new Error('Failed to fetch task flow');
-      
-      const data = await response.json();
+
+      const raw = await response.json();
+
+      // /api/memory/graph returns { nodes, edges, statistics } directly,
+      // not the { graph, conflicts, statistics, timestamp } wrapper the
+      // component expects. Build a compatible view.
+      const data: TaskFlowData = {
+        graph: {
+          nodes: raw.nodes || [],
+          edges: raw.edges || [],
+          metadata: {
+            total_nodes: raw.statistics?.total_agents || raw.nodes?.length || 0,
+            total_edges: raw.edges?.length || 0,
+            generated_at: new Date().toISOString(),
+          },
+        },
+        conflicts: [],
+        statistics: {
+          active_agents: raw.statistics?.total_agents || raw.nodes?.length || 0,
+          total_communications: 0,
+          communication_types: {},
+          agent_activity: {},
+        },
+        timestamp: new Date().toISOString(),
+      };
+
       setFlowData(data);
       updateFlowVisualization(data);
       setError(null);
@@ -118,39 +143,29 @@ export const TaskFlowVisualization: React.FC = () => {
     }
   };
 
-  // Handle WebSocket updates
-  useEffect(() => {
-    if (wsData && wsData.type === 'task_flow') {
-      setFlowData(wsData.data);
-      updateFlowVisualization(wsData.data);
-    } else if (wsData && wsData.type === 'conflict_resolved') {
-      // Refresh data when conflicts are resolved
-      fetchTaskFlow();
-    }
-  }, [wsData]);
-
   // Convert backend data to ReactFlow format
   const updateFlowVisualization = useCallback((data: TaskFlowData) => {
     if (!data.graph) return;
 
-    // Convert nodes
+    // Convert nodes. /api/memory/graph returns { id, label, type, status }.
+    // The component's TaskFlowNode expects { agent_name, task_type, metadata }.
     const flowNodes: Node[] = data.graph.nodes.map((node, index) => ({
       id: node.id,
       type: 'default',
-      position: { 
-        x: (index % 4) * 250, 
-        y: Math.floor(index / 4) * 150 
+      position: {
+        x: (index % 4) * 250,
+        y: Math.floor(index / 4) * 150
       },
       data: {
         label: (
           <div className="p-2 text-center">
-            <div className="font-semibold text-sm">{node.agent_name}</div>
-            <div className="text-xs text-gray-600">{node.task_type}</div>
+            <div className="font-semibold text-sm">{node.agent_name || node.label}</div>
+            <div className="text-xs text-gray-600">{node.task_type || node.type}</div>
             <div className="mt-1">
-              <Badge 
-                variant="outline" 
+              <Badge
+                variant="outline"
                 className="text-xs"
-                style={{ 
+                style={{
                   backgroundColor: nodeStatusColors[node.status],
                   color: 'white',
                   borderColor: nodeStatusColors[node.status]
@@ -159,7 +174,7 @@ export const TaskFlowVisualization: React.FC = () => {
                 {node.status}
               </Badge>
             </div>
-            {node.metadata.active_jobs > 0 && (
+            {node.metadata && node.metadata.active_jobs > 0 && (
               <div className="text-xs mt-1 text-blue-600">
                 {node.metadata.active_jobs} active
               </div>
@@ -178,7 +193,8 @@ export const TaskFlowVisualization: React.FC = () => {
       targetPosition: Position.Left
     }));
 
-    // Convert edges
+    // Convert edges. /api/memory/graph returns { id, source, target }.
+    // relationship_type may be absent; default to dependency.
     const flowEdges: Edge[] = data.graph.edges.map((edge) => ({
       id: edge.id,
       source: edge.source,
@@ -189,7 +205,7 @@ export const TaskFlowVisualization: React.FC = () => {
         stroke: edgeTypeColors[edge.relationship_type] || '#6b7280',
         strokeWidth: 2
       },
-      label: edge.relationship_type,
+      label: edge.relationship_type || 'dependency',
       labelStyle: {
         fontSize: '10px',
         fontWeight: 'bold'
@@ -200,23 +216,9 @@ export const TaskFlowVisualization: React.FC = () => {
     setEdges(flowEdges);
   }, [setNodes, setEdges]);
 
-  // Resolve conflict
-  const resolveConflict = async (conflictId: string, resolution: Record<string, any>) => {
-    try {
-      const response = await fetch(`/api/task-flow/conflicts/${conflictId}/resolve`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(resolution)
-      });
-      
-      if (!response.ok) throw new Error('Failed to resolve conflict');
-      
-      // Refresh data
-      await fetchTaskFlow();
-      setSelectedConflict(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to resolve conflict');
-    }
+  // Conflict resolution has no backend equivalent; disable gracefully.
+  const resolveConflict = async (_conflictId: string, _resolution: Record<string, any>) => {
+    setError('Conflict resolution is not available in the current backend.');
   };
 
   // Initial load

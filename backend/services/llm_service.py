@@ -52,7 +52,12 @@ class LLMService:
             LLMProvider.OPENROUTER: {
                 "api_key": os.getenv("OPENROUTER_API_KEY"),
                 "base_url": "https://openrouter.ai/api/v1/chat/completions",
-                "models": ["deepseek/deepseek-chat", "meta-llama/llama-3.1-8b-instruct:free", "microsoft/phi-3-mini-128k-instruct:free"]
+                "models": [
+                    "openai/gpt-oss-20b:free",
+                    "nvidia/nemotron-3-nano-30b-a3b:free",
+                    "google/gemma-4-31b-it:free",
+                    "deepseek/deepseek-chat",
+                ]
             },
             LLMProvider.OPENAI: {
                 "api_key": os.getenv("OPENAI_API_KEY"),
@@ -151,12 +156,12 @@ class LLMService:
             order.extend([p for p in available_providers if p != preferred])
             return order
         
-        # Default order by reliability (mock first for testing)
+        # Default order: prefer real providers, fall back to mock only when needed
         default_order = [
-            LLMProvider.MOCK,
             LLMProvider.OPENROUTER,
             LLMProvider.OPENAI,
             LLMProvider.GOOGLE,
+            LLMProvider.MOCK,
         ]
         
         return [p for p in default_order if p in available_providers]

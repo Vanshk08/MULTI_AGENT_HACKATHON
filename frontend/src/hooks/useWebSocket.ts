@@ -26,10 +26,13 @@ export const useWebSocket = (url: string): UseWebSocketReturn => {
 
   const connect = useCallback(() => {
     try {
-      // Convert relative URL to WebSocket URL
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}${url}`;
-      
+      // Build WebSocket URL from the same backend host used for REST API
+      // so ws://localhost:8000/ws/... is used instead of the Vite dev server.
+      const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)
+        || `http://${window.location.host}`;
+      const wsBaseUrl = API_BASE_URL.replace(/^http/, 'ws');
+      const wsUrl = url.startsWith('ws') ? url : `${wsBaseUrl}${url}`;
+
       wsRef.current = new WebSocket(wsUrl);
 
       wsRef.current.onopen = () => {
