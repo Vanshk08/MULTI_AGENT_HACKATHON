@@ -67,3 +67,9 @@ Thumbs.db
 
 # Neo4j database backups
 graph.db.backup_*/
+
+.env
+.env.*
+!.env.example
+
+node_modules/
