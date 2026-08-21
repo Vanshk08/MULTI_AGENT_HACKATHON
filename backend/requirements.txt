@@ -1,0 +1,54 @@
+# FastAPI & Core
+fastapi>=0.110,<0.116
+uvicorn[standard]>=0.30,<0.35
+pydantic>=2.5,<3
+python-multipart>=0.0.12,<0.1
+
+# Agent Framework (kept on a mutually compatible line)
+langgraph>=0.2.40,<0.3
+langchain>=0.3.0,<0.4
+langchain-community>=0.3.0,<0.4
+langchain-core>=0.3.0,<0.4
+crewai>=0.76,<0.86
+
+# Memory & Storage
+neo4j>=5.15,<6
+qdrant-client>=1.9,<2
+redis>=5,<6
+redis[asyncio]>=5,<6
+upstash-redis>=1.0,<2
+
+# Tools & Integrations
+# crawl4ai is intentionally omitted - it is unavailable and kept optional.
+aiohttp>=3.9
+httpx>=0.25,<0.29
+requests>=2.31
+
+# Utilities
+python-dotenv>=1.0
+pyyaml>=6.0.2
+loguru>=0.7
+aiofiles>=23.2
+sentence-transformers>=3.0
+
+# Report Generation
+weasyprint>=62.3
+matplotlib>=3.8
+seaborn>=0.13
+python-dateutil>=2.8
+markdown2>=2.4
+reportlab>=4.0
+markdown>=3.5
+
+# AI/LLM extras
+google-generativeai>=0.8
+tiktoken>=0.8
+cachetools>=5.3
+python-docx>=1.1
+jinja2>=3.1
+
+# Task Queue
+bullmq>=2.0,<3
+
+# Build tools
+setuptools<82
