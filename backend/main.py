@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 import os
 
 # Load environment variables
-env_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../.env'))
+env_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '.env'))
 print(f"Loading environment from: {env_path}")
 load_dotenv(env_path)
 
